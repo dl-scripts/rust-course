@@ -37,6 +37,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc.js"></script>
@@ -93,10 +94,13 @@
                 sidebar = sidebar || 'visible';
             } else {
                 sidebar = 'hidden';
+                sidebar_toggle.checked = false;
             }
-            sidebar_toggle.checked = sidebar === 'visible';
-            html.classList.remove('sidebar-visible');
-            html.classList.add("sidebar-" + sidebar);
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
         </script>
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
@@ -144,7 +148,7 @@
                         <a href="https://github.com/sunface/rust-course" title="Git repository" aria-label="Git repository">
                             <i id="git-repository-button" class="fa fa-github"></i>
                         </a>
-                        <a href="https://github.com/sunface/rust-course/edit/main/src/first-try/installation.md" title="Suggest an edit" aria-label="Suggest an edit">
+                        <a href="https://github.com/sunface/rust-course/edit/main/src/first-try/installation.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
                             <i id="git-edit-button" class="fa fa-edit"></i>
                         </a>
 
@@ -153,7 +157,12 @@
 
                 <div id="search-wrapper" class="hidden">
                     <form id="searchbar-outer" class="searchbar-outer">
-                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
                     </form>
                     <div id="searchresults-outer" class="searchresults-outer hidden">
                         <div id="searchresults-header" class="searchresults-header"></div>
@@ -198,6 +207,18 @@
 <p><strong>Linux 下：</strong></p>
 <p>Linux 用户一般应按照相应发行版的文档来安装 <code>GCC</code> 或 <code>Clang</code>。</p>
 <p>例如，如果你使用 Ubuntu，则可安装 <code>build-essential</code>。</p>
+<h2 id="在-freebsd-上安装-rustup"><a class="header" href="#在-freebsd-上安装-rustup">在 FreeBSD 上安装 <code>rustup</code></a></h2>
+<ul>
+<li>使用 pkg 安装：</li>
+</ul>
+<pre><code class="language-sh"># pkg install rustup-init
+</code></pre>
+<ul>
+<li>使用 Ports 安装：</li>
+</ul>
+<pre><code class="language-sh"># cd /usr/ports/devel/rustup-init/ 
+# make install clean
+</code></pre>
 <h2 id="在-windows-上安装-rustup"><a class="header" href="#在-windows-上安装-rustup">在 Windows 上安装 <code>rustup</code></a></h2>
 <p>Windows 上安装 Rust 需要有 <code>C++</code> 环境，以下为安装的两种方式：</p>
 <p><strong>1. <code>x86_64-pc-windows-msvc</code>（官方推荐）</strong></p>
@@ -350,6 +371,7 @@ cargo 1.57.0 (b2e52d7ca 2021-10-21)
         <!-- Custom JS scripts -->
         <script src="../assets/custom.js"></script>
         <script src="../assets/bigPicture.js"></script>
+
 
 
     </div>

@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>通过 config.toml 对 Cargo 进行配置 - Rust语言圣经(Rust Course)</title>
+        <title>1.88 - Rust语言圣经(Rust Course)</title>
 
 
         <!-- Custom HTML head -->
@@ -148,7 +148,7 @@
                         <a href="https://github.com/sunface/rust-course" title="Git repository" aria-label="Git repository">
                             <i id="git-repository-button" class="fa fa-github"></i>
                         </a>
-                        <a href="https://github.com/sunface/rust-course/edit/main/src/cargo/reference/configuration.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                        <a href="https://github.com/sunface/rust-course/edit/main/src/appendix/rust-versions/1.88.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
                             <i id="git-edit-button" class="fa fa-edit"></i>
                         </a>
 
@@ -182,170 +182,63 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="通过-configtoml-对-cargo-进行配置"><a class="header" href="#通过-configtoml-对-cargo-进行配置">通过 config.toml 对 Cargo 进行配置</a></h1>
-<p>Cargo 相关的配置有两种，第一种是对自身进行配置，第二种是对指定的项目进行配置，关于后者请查看 <a href="https://course.rs/cargo/reference/manifest.html">Cargo.toml 清单</a>。对于普通用户而言第二种才是我们最常使用的。</p>
-<p>本文讲述的是如何对 Cargo 相关的工具进行配置，该配置中的部分内容可能会覆盖掉 <code>Cargo.toml</code> 中对应的部分，例如关于 <code>profile</code> 的内容。</p>
-<h2 id="层级结构"><a class="header" href="#层级结构">层级结构</a></h2>
-<p>在前面我们已经见识过如何为 Cargo 进行全局配置：<code>$HOME/.cargo/config.toml</code>，事实上，还支持在一个 <code>package</code> 内对它进行配置。</p>
-<p>总体原则是：<code>Cargo</code> 会顺着当前目录往上查找，直到找到目标配置文件。例如我们在目录 <code>/projects/foo/bar/baz</code> 下调用 Cargo 命令，那查找路径如下所示：</p>
-<ul>
-<li><code>/projects/foo/bar/baz/.cargo/config.toml</code></li>
-<li><code>/projects/foo/bar/.cargo/config.toml</code></li>
-<li><code>/projects/foo/.cargo/config.toml</code></li>
-<li><code>/projects/.cargo/config.toml</code></li>
-<li><code>/.cargo/config.toml</code></li>
-<li><code>$CARGO_HOME/config.toml</code> 默认是 :
-<ul>
-<li>Windows: <code>%USERPROFILE%\.cargo\config.toml</code></li>
-<li>Unix: <code>$HOME/.cargo/config.toml</code></li>
-</ul>
-</li>
-</ul>
-<p>有了这种机制，我们既可以在全局中设置默认的配置，又可以每个包都设定独立的配置，甚至还能做版本控制。</p>
-<p>如果一个 <code>key</code> 在多个配置中出现，那这些 <code>key</code> 只会保留一个：最靠近 Cargo 执行目录的配置文件中的 key 的值将被最终使用(因此， $HOME 下的都是最低优先级)。<strong>需要注意的是，如果 <code>key</code> 的值是数组，那相应的值将被合并( join )</strong>。</p>
-<p>对于工作空间而言，<code>Cargo</code> 的搜索策略是从 root 开始，对于内部成员中包含的 <code>.cargo.toml</code> 会自动忽略。例如一个工作空间拥有两个成员，每个成员都有配置文件: <code>/projects/foo/bar/baz/mylib/.cargo/config.toml</code> 和 <code>/projects/foo/bar/baz/mybin/.cargo/config.toml</code>，但是 <code>Cargo</code> 并不会读取它们而是从工作空间的根( <code>/projects/foo/bar/baz/</code> )开始往上查找。</p>
+                        <h1 id="rust-新版解读--188--let_chains"><a class="header" href="#rust-新版解读--188--let_chains">Rust 新版解读 | 1.88 | let_chains</a></h1>
 <blockquote>
-<p>注意：Cargo 还支持没有 <code>.toml</code> 后缀的 <code>.cargo/config</code> 文件。对于 <code>.toml</code> 的支持是从 Rust 1.39 版本开始，同时也是目前最推荐的方式。<strong>但若同时存在有后缀和无后缀的文件，Cargo 将使用无后缀的!</strong></p>
+<p>Rust 1.88 官方 release doc: <a href="https://blog.rust-lang.org/2025/06/26/Rust-1.88.0/">Announcing Rust 1.88.0 | Rust Blog</a></p>
 </blockquote>
-<h2 id="配置文件概览"><a class="header" href="#配置文件概览">配置文件概览</a></h2>
-<p>下面是一个完整的配置文件，并对<strong>常用的选项</strong>进行了翻译，大家可以参考下:</p>
-<pre><code class="language-toml">paths = ["/path/to/override"] # 覆盖 `Cargo.toml` 中通过 path 引入的本地依赖
-
-[alias]     # 命令别名
-b = "build"
-c = "check"
-t = "test"
-r = "run"
-rr = "run --release"
-space_example = ["run", "--release", "--", "\"command list\""]
-
-[build]
-jobs = 1                      # 并行构建任务的数量，默认等于 CPU 的核心数
-rustc = "rustc"               # rust 编译器
-rustc-wrapper = "…"           # 使用该 wrapper 来替代 rustc
-rustc-workspace-wrapper = "…" # 为工作空间的成员使用 该 wrapper 来替代 rustc
-rustdoc = "rustdoc"           # 文档生成工具
-target = "triple"             # 为 target triple 构建 ( `cargo install` 会忽略该选项)
-target-dir = "target"         # 存放编译输出结果的目录
-rustflags = ["…", "…"]        # 自定义flags，会传递给所有的编译器命令调用
-rustdocflags = ["…", "…"]     # 自定义flags，传递给 rustdoc
-incremental = true            # 是否开启增量编译
-dep-info-basedir = "…"        # path for the base directory for targets in depfiles
-pipelining = true             # rustc pipelining
-
-[doc]
-browser = "chromium"          # `cargo doc --open` 使用的浏览器,
-                              # 可以通过 `BROWSER` 环境变量进行重写
-
-[env]
-# Set ENV_VAR_NAME=value for any process run by Cargo
-ENV_VAR_NAME = "value"
-# Set even if already present in environment
-ENV_VAR_NAME_2 = { value = "value", force = true }
-# Value is relative to .cargo directory containing `config.toml`, make absolute
-ENV_VAR_NAME_3 = { value = "relative/path", relative = true }
-
-[cargo-new]
-vcs = "none"              # 所使用的 VCS  ('git', 'hg', 'pijul', 'fossil', 'none')
-
-[http]
-debug = false               # HTTP debugging
-proxy = "host:port"         # HTTP 代理，libcurl 格式
-ssl-version = "tlsv1.3"     # TLS version to use
-ssl-version.max = "tlsv1.3" # 最高支持的 TLS 版本
-ssl-version.min = "tlsv1.1" # 最小支持的 TLS 版本
-timeout = 30                # HTTP 请求的超时时间，秒
-low-speed-limit = 10        # 网络超时阈值 (bytes/sec)
-cainfo = "cert.pem"         # path to Certificate Authority (CA) bundle
-check-revoke = true         # check for SSL certificate revocation
-multiplexing = true         # HTTP/2 multiplexing
-user-agent = "…"            # the user-agent header
-
-[install]
-root = "/some/path"         # `cargo install` 安装到的目标目录
-
-[net]
-retry = 2                   # 网络重试次数
-git-fetch-with-cli = true   # 是否使用 `git` 命令来执行 git 操作
-offline = true              # 不能访问网络
-
-[patch.&lt;registry&gt;]
-# Same keys as for [patch] in Cargo.toml
-
-[profile.&lt;name&gt;]         # profile 配置，详情见"如何在 Cargo.toml 中配置 profile" : https://course.rs/cargo/reference/profiles.html#profile设置
-opt-level = 0
-debug = true
-split-debuginfo = '...'
-debug-assertions = true
-overflow-checks = true
-lto = false
-panic = 'unwind'
-incremental = true
-codegen-units = 16
-rpath = false
-[profile.&lt;name&gt;.build-override]
-[profile.&lt;name&gt;.package.&lt;name&gt;]
-
-[registries.&lt;name&gt;]  # 设置其它的注册服务： https://course.rs/cargo/reference/specify-deps.html#从其它注册服务引入依赖包
-index = "…"          # 注册服务索引列表的 URL
-token = "…"          # 连接注册服务所需的鉴权 token
-
-[registry]
-default = "…"        # 默认的注册服务名称: crates.io
-token = "…"
-
-[source.&lt;name&gt;]      # 注册服务源和替换source definition and replacement
-replace-with = "…"   # 使用给定的 source 来替换当前的 source，例如使用科大源来替换crates.io源以提升国内的下载速度：[source.crates-io] replace-with = 'ustc'
-directory = "…"      # path to a directory source
-registry = "…"       # 注册源的 URL ，例如科大源: [source.ustc] registry = "git://mirrors.ustc.edu.cn/crates.io-index"
-local-registry = "…" # path to a local registry source
-git = "…"            # URL of a git repository source
-branch = "…"         # branch name for the git repository
-tag = "…"            # tag name for the git repository
-rev = "…"            # revision for the git repository
-
-[target.&lt;triple&gt;]
-linker = "…"            # linker to use
-runner = "…"            # wrapper to run executables
-rustflags = ["…", "…"]  # custom flags for `rustc`
-
-[target.&lt;cfg&gt;]
-runner = "…"            # wrapper to run executables
-rustflags = ["…", "…"]  # custom flags for `rustc`
-
-[target.&lt;triple&gt;.&lt;links&gt;] # `links` build script override
-rustc-link-lib = ["foo"]
-rustc-link-search = ["/path/to/foo"]
-rustc-flags = ["-L", "/some/path"]
-rustc-cfg = ['key="value"']
-rustc-env = {key = "value"}
-rustc-cdylib-link-arg = ["…"]
-metadata_key1 = "value"
-metadata_key2 = "value"
-
-[term]
-verbose = false        # whether cargo provides verbose output
-color = 'auto'         # whether cargo colorizes output
-progress.when = 'auto' # whether cargo shows progress bar
-progress.width = 80    # width of progress bar
+<p>通过 <a href="https://www.rust-lang.org/tools/install">rustup</a> 安装的同学可以使用以下命令升级到 1.88 版本:</p>
+<pre><code class="language-shell">$ rustup update stable
 </code></pre>
-<h2 id="环境变量"><a class="header" href="#环境变量">环境变量</a></h2>
-<p>除了 <code>config.toml</code> 配置文件，我们还可以使用环境变量的方式对 Cargo 进行配置。</p>
-<p>配置文件的中的 key <code>foo.bar</code> 对应的环境变量形式为 <code>CARGO_FOO_BAR</code>，其中的<code>.</code>、<code>-</code> 被转换成 <code>_</code>，且字母都变成大写的。例如，<code>target.x86_64-unknown-linux-gnu.runner</code> key 转换成环境变量后变成 <code>CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUNNER</code>。</p>
-<p>就优先级而言，环境变量是比配置文件更高的。除了上面的机制，Cargo 还支持一些<a href="https://doc.rust-lang.org/stable/cargo/reference/environment-variables.html">预定义的环境变量</a>。</p>
-<blockquote>
-<p>官方 Cargo Book 中本文的内容还有<a href="https://doc.rust-lang.org/stable/cargo/reference/config.html#configuration-keys">很多</a>，但是剩余内容对于绝大多数用户都用不到，因此我们并没有涵盖其中。</p>
-</blockquote>
+<h2 id="let-链式表达式"><a class="header" href="#let-链式表达式">let 链式表达式</a></h2>
+<p>该特性允许在 <code>if</code> 和 <code>while</code> 条件中使用 <code>&amp;&amp;</code> 连接的 <code>let</code> 语句，甚至可以与布尔表达式混合使用，从而减少 <code>if</code>/<code>if let</code> 和 <code>while</code>/<code>while let</code> 之间的差异。<code>let</code> 子表达式中的模式可以是不可反驳或可反驳的，绑定变量可以在链式后续部分和代码体中使用。</p>
+<p>例如，以下代码片段组合了多个条件，之前需要嵌套 <code>if let</code> 和 <code>if</code> 块才能实现：</p>
+<pre><pre class="playground"><code class="language-rust edition2021"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>if let Channel::Stable(v) = release_info()
+    &amp;&amp; let Semver { major, minor, .. } = v
+    &amp;&amp; major == 1
+    &amp;&amp; minor == 88
+{
+    println!("`let_chains` 在此版本中已稳定");
+}
+<span class="boring">}</span></code></pre></pre>
+<p>由于一些边界场景难以兼容，let 链式表达式仅在 Rust 2024 版本中可用，因为该特性依赖于 <a href="https://doc.rust-lang.org/edition-guide/rust-2024/temporary-if-let-scope.html"><code>if let</code> 临时作用域</a> 变更以实现更一致的析构顺序。</p>
+<h2 id="裸函数"><a class="header" href="#裸函数">裸函数</a></h2>
+<p>Rust 现在支持编写没有编译器生成的收尾代码和序言的裸函数，允许完全控制特定函数的生成汇编代码。这是在 <code>global_asm!</code> 块中定义函数的更符合人体工程学的替代方案。裸函数使用 <code>#[unsafe(naked)]</code> 属性标记，其函数体由单个 <code>naked_asm!</code> 调用组成。</p>
+<p>例如：</p>
+<pre><pre class="playground"><code class="language-rust edition2021"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[unsafe(naked)]
+pub unsafe extern "sysv64" fn wrapping_add(a: u64, b: u64) -&gt; u64 {
+    // 等同于 `a.wrapping_add(b)`。
+    core::arch::naked_asm!(
+        "lea rax, [rdi + rsi]",
+        "ret"
+    );
+}
+<span class="boring">}</span></code></pre></pre>
+<p>手写的汇编块定义了整个函数体：与非裸函数不同，编译器不会对参数或返回值添加任何特殊处理。裸函数用于 Rust 的 <a href="https://github.com/rust-lang/compiler-builtins">compiler-builtins</a>、操作系统和嵌入式应用程序等场景。</p>
+<h2 id="布尔配置"><a class="header" href="#布尔配置">布尔配置</a></h2>
+<p><code>cfg</code> 谓词现在支持布尔字面量 <code>true</code> 和 <code>false</code>，分别作为始终启用或禁用的配置。这适用于 Rust 的<a href="https://doc.rust-lang.org/reference/conditional-compilation.html">条件编译</a>中的 <code>cfg</code> 和 <code>cfg_attr</code> 属性以及内置的 <code>cfg!</code> 宏，也适用于 Cargo <code>[target]</code> 表中的<a href="https://doc.rust-lang.org/cargo/reference/config.html#target">配置</a>和<a href="https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#platform-specific-dependencies">清单</a>。</p>
+<p>此前，空谓词列表可以用于无条件配置，例如 <code>cfg(all())</code> 用于启用，<code>cfg(any())</code> 用于禁用，但这种含义相当隐式且容易搞反。<code>cfg(true)</code> 和 <code>cfg(false)</code> 提供了一种更直接的方式来表达你的意图。</p>
+<p>具体背景细节可以参考 <a href="https://rust-lang.github.io/rfcs/3695-cfg-boolean-literals.html">RFC-3695</a></p>
+<h2 id="cargo-自动缓存清理"><a class="header" href="#cargo-自动缓存清理">Cargo 自动缓存清理</a></h2>
+<p>从 1.88.0 开始，Cargo 将自动对其主目录中的缓存运行垃圾回收！</p>
+<p>构建时，Cargo 会下载并缓存所需的依赖项。历史上，这些下载的文件永远不会被清理，导致 Cargo 主目录中的磁盘使用量无限增长。在此版本中，Cargo 引入了垃圾回收机制来自动清理旧文件（例如 <code>.crate</code> 文件）。Cargo 将删除从网络下载且 3 个月内未访问的文件，以及从本地系统获取且 1 个月内未访问的文件。请注意，如果在离线状态下运行（使用 <code>--offline</code> 或 <code>--frozen</code>），则不会进行此自动垃圾回收。</p>
+<p>Cargo 1.78 以后会跟踪所需的访问信息以进行此垃圾回收。这是在实际清理开始之前引入的，以减少仍使用早期版本的用户的缓存更换。如果你经常使用比 1.78 版本更早的 Cargo 版本，并且希望某些仅由旧版本访问的 crate 不被重新下载，你可以在 Cargo 配置中设置 <code>cache.auto-clean-frequency = "never"</code>，如<a href="https://doc.rust-lang.org/nightly/cargo/reference/config.html#cache">文档</a>所述。</p>
+<p>有关更多信息，请参阅此功能的原始<a href="https://blog.rust-lang.org/2023/12/11/cargo-cache-cleaning/">不稳定公告</a>。该设计的某些部分仍不稳定，例如 <a href="https://github.com/rust-lang/cargo/issues/13060">cargo#13060</a> 中跟踪的 <code>gc</code> 子命令，因此仍有更多值得期待的内容！</p>
+<h2 id="others"><a class="header" href="#others">Others</a></h2>
+<p>其它更新细节，和稳定的 API 列表，参考<a href="https://blog.rust-lang.org/2025/06/26/Rust-1.88.0/#stabilized-apis">原Blog</a></p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../../cargo/reference/profiles.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../../appendix/rust-versions/1.87.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../../cargo/reference/publishing-on-crates.io.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../../appendix/rust-versions/1.89.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -355,11 +248,11 @@ progress.width = 80    # width of progress bar
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../../cargo/reference/profiles.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../../appendix/rust-versions/1.87.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../../cargo/reference/publishing-on-crates.io.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../../appendix/rust-versions/1.89.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
